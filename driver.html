@@ -64,7 +64,7 @@
             <input type="text" id="fleetName" placeholder="Fleet Name">
             <input type="text" id="fleetWallet" placeholder="Fleet Wallet">
             <input type="text" id="driverName" placeholder="Driver Name">
-            <input type="date" id="lastTrip">
+            <input type="number" id="lastTrip" placeholder="Last Trip Amount" step="0.01">
             <button onclick="addOrUpdateFleet()">Save</button>
             <input type="color" id="highlightColor" value="#ffff00">
         </div>
@@ -76,7 +76,7 @@
                         <th>Fleet Name</th>
                         <th>Fleet Wallet</th>
                         <th>Driver Name</th>
-                        <th>Last Trip</th>
+                        <th>Last Trip (Amount)</th>
                         <th id="adminColumn" style="display: none;">Actions</th>
                     </tr>
                 </thead>
@@ -218,7 +218,6 @@
             loadFleetData();
         }
 
-        // Show Fleet Page if already logged in
         window.onload = showFleetPage;
     </script>
 
