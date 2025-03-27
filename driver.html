@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+        }
+        .login-container, .list-container {
+            max-width: 400px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fff;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        .list-container {
+            max-width: 90%;
+            display: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .controls {
+            margin-top: 10px;
+        }
+        input, select, button {
+            padding: 8px;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Login Form -->
+    <div class="login-container" id="loginBox">
+        <h2>Login</h2>
+        <input type="text" id="mobile" placeholder="Enter Mobile Number"><br>
+        <input type="password" id="password" placeholder="Enter Password"><br>
+        <button onclick="login()">Login</button>
+    </div>
+
+    <!-- Fleet Information -->
+    <div class="list-container" id="fleetPage">
+        <h2>Fleet Information</h2>
+
+        <div class="controls" id="adminControls" style="display: none;">
+            <input type="text" id="fleetName" placeholder="Fleet Name">
+            <input type="text" id="fleetWallet" placeholder="Fleet Wallet">
+            <input type="text" id="driverName" placeholder="Driver Name">
+            <input type="date" id="lastTrip">
+            <button onclick="addOrUpdateFleet()">Save</button>
+            <input type="color" id="highlightColor" value="#ffff00">
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table id="fleetTable">
+                <thead>
+                    <tr>
+                        <th>Fleet Name</th>
+                        <th>Fleet Wallet</th>
+                        <th>Driver Name</th>
+                        <th>Last Trip</th>
+                        <th id="adminColumn" style="display: none;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data will be dynamically inserted here -->
+                </tbody>
+            </table>
+        </div>
+
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        let editIndex = -1;
+        let userRole = null;
+
+        // Login Function
+        function login() {
+            let mobile = document.getElementById("mobile").value;
+            let password = document.getElementById("password").value;
+
+            if (mobile === "7015754554" && password === "7015754554") {
+                userRole = "admin";
+            } else if (mobile === "9876543210" && password === "4444rrrr") {
+                userRole = "user";
+            } else {
+                alert("Invalid Login Details");
+                return;
+            }
+
+            localStorage.setItem("loggedInUser", userRole);
+            showFleetPage();
+        }
+
+        // Show Fleet Page Based on Role
+        function showFleetPage() {
+            let role = localStorage.getItem("loggedInUser");
+            if (!role) return;
+
+            document.getElementById("loginBox").style.display = "none";
+            document.getElementById("fleetPage").style.display = "block";
+
+            if (role === "admin") {
+                document.getElementById("adminControls").style.display = "block";
+                document.getElementById("adminColumn").style.display = "block";
+            } else {
+                document.getElementById("adminControls").style.display = "none";
+                document.getElementById("adminColumn").style.display = "none";
+            }
+
+            loadFleetData();
+        }
+
+        // Logout Function
+        function logout() {
+            localStorage.removeItem("loggedInUser");
+            location.reload();
+        }
+
+        // Load Fleet Data
+        function loadFleetData() {
+            let fleetData = JSON.parse(localStorage.getItem("fleets")) || [];
+            let colors = JSON.parse(localStorage.getItem("fleetColors")) || {};
+            let tableBody = document.querySelector("#fleetTable tbody");
+            tableBody.innerHTML = "";
+
+            fleetData.forEach((fleet, index) => {
+                let row = document.createElement("tr");
+                row.setAttribute("data-index", index);
+                row.style.backgroundColor = colors[index] || "";
+
+                row.innerHTML = `
+                    <td>${fleet.name}</td>
+                    <td>${fleet.wallet}</td>
+                    <td>${fleet.driver}</td>
+                    <td>${fleet.trip}</td>
+                    ${userRole === "admin" ? `
+                    <td>
+                        <button onclick="editFleet(${index})">Edit</button>
+                        <button onclick="deleteFleet(${index})">Delete</button>
+                        <button onclick="highlightRow(${index})">Set Color</button>
+                    </td>
+                    ` : ""}
+                `;
+
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Add or Update Fleet
+        function addOrUpdateFleet() {
+            let name = document.getElementById("fleetName").value;
+            let wallet = document.getElementById("fleetWallet").value;
+            let driver = document.getElementById("driverName").value;
+            let trip = document.getElementById("lastTrip").value;
+
+            if (!name || !wallet || !driver || !trip) {
+                alert("Please fill all fields.");
+                return;
+            }
+
+            let fleetData = JSON.parse(localStorage.getItem("fleets")) || [];
+            if (editIndex === -1) {
+                fleetData.push({ name, wallet, driver, trip });
+            } else {
+                fleetData[editIndex] = { name, wallet, driver, trip };
+                editIndex = -1;
+            }
+
+            localStorage.setItem("fleets", JSON.stringify(fleetData));
+            loadFleetData();
+            clearForm();
+        }
+
+        // Edit Fleet
+        function editFleet(index) {
+            let fleetData = JSON.parse(localStorage.getItem("fleets"));
+            document.getElementById("fleetName").value = fleetData[index].name;
+            document.getElementById("fleetWallet").value = fleetData[index].wallet;
+            document.getElementById("driverName").value = fleetData[index].driver;
+            document.getElementById("lastTrip").value = fleetData[index].trip;
+            editIndex = index;
+        }
+
+        // Delete Fleet
+        function deleteFleet(index) {
+            let fleetData = JSON.parse(localStorage.getItem("fleets"));
+            fleetData.splice(index, 1);
+            localStorage.setItem("fleets", JSON.stringify(fleetData));
+            loadFleetData();
+        }
+
+        // Highlight Row and Save Color
+        function highlightRow(index) {
+            let color = document.getElementById("highlightColor").value;
+            let colors = JSON.parse(localStorage.getItem("fleetColors")) || {};
+            colors[index] = color;
+            localStorage.setItem("fleetColors", JSON.stringify(colors));
+            loadFleetData();
+        }
+
+        // Show Fleet Page if already logged in
+        window.onload = showFleetPage;
+    </script>
+
+</body>
+</html>
